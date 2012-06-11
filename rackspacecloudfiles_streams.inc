@@ -86,6 +86,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    *   or FALSE if unable to write to the file such as with read-only streams.
    */
   protected function getTarget($uri = NULL) {
+    dpm(debug_backtrace());
     if (!isset($uri)) {
       $uri = $this->uri;
     }

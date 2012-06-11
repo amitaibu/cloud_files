@@ -9,7 +9,7 @@ function cloud_files_menu() {
     'title' => 'Cloud Files',
     'description' => 'Cloud Files Configuration',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('cloud_files_admin'),
+    'page arguments' => array('cloud_files_admin_settings'),
     'access arguments' => array('administer site configuration'),
   );
 
@@ -47,7 +47,7 @@ function _cloud_files_auth_urls() {
 /**
  * Implements hook_admin().
  */
-function cloud_files_admin() {
+function cloud_files_admin_settings() {
 
   // radios group with an other option taken from http://drupal.org/node/772446
 
@@ -113,7 +113,7 @@ function cloud_files_admin() {
   $rackspace_cloud_api_key = variable_get('rackspace_cloud_api_key');
   $rackspace_cloud_container = variable_get('rackspace_cloud_container');
   $rackspace_cloud_cdn_domain = variable_get('rackspace_cloud_cdn_domain');
-  
+
   $form['rackspace_cloud_username'] = array(
     '#type' => 'textfield',
     '#title' => t('Username'),
@@ -317,8 +317,8 @@ function cloud_files_requirements() {
 
 function _cloud_files_get_authentication() {
   $credentials = cache_get("rackspace_cloud_credentials");
-  
-  if ($credentials) {      
+
+  if ($credentials) {
     //check to make sure the credentials are less than 1 day old
     $created = new DateTime(date("r", $credentials->created));
     $now = new DateTime();
@@ -330,12 +330,12 @@ function _cloud_files_get_authentication() {
       $credentials = NULL;
     }
   }
-    
+
   if ($credentials) {
     if (variable_get('rackspace_cloud_debug')) {
       watchdog("cloud_files", "loading cached credentials", NULL, WATCHDOG_DEBUG);
     }
-    
+
     $auth_token = $credentials->data['auth_token'];
     $storage_url = $credentials->data['storage_url'];
     $cdnm_url = $credentials->data['cdnm_url'];
@@ -353,7 +353,7 @@ function _cloud_files_get_authentication() {
                                   variable_get('rackspace_cloud_auth_url'));
     $auth->authenticate();
     $credentials = $auth->export_credentials();
-    
+
     cache_set("rackspace_cloud_credentials", $credentials, 'cache', CACHE_TEMPORARY);
   }
   return $auth;
