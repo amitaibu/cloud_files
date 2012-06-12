@@ -786,17 +786,10 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if (!empty($this->cloud_files_container)) {
       return;
     }
-    $info = explode('/', file_uri_target($this->uri));
-    if (strpos($info[0], '__') === 0) {
-      $name = substr($info[0], 2);
-      // Yank the container name from the URI.
-      unset($info[0]);
-      $this->uri = 'rcf://' . implode('/', $info);
-    }
-    else {
+
+    if (!$name = cloud_files_get_container_cache($this->uri)) {
       $name = variable_get('rackspace_cloud_container');
     }
-
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }
