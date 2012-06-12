@@ -408,7 +408,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $this->stream_pointer = 0;
     return TRUE;
   }
-  }
 
   /**
    * Support for ftell().
