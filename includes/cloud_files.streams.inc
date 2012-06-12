@@ -75,6 +75,11 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     return $this->uri;
   }
 
+  function __construct() {
+    // Set the container by one passed via URL, and remove it from the
+    // URI. If a container does not exist, then add the default one.
+  }
+
   /**
    * Returns the local writable target of the resource within the stream.
    *
@@ -378,30 +383,32 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    * @see http://php.net/manual/en/streamwrapper.stream-flush.php
    */
   public function stream_flush() {
+public function stream_flush() {
     if (variable_get('rackspace_cloud_debug')) {
       watchdog("cloud_files", "flushing file, writing to Rackspace (stream_flush) %file", array('%file' => $this->uri), WATCHDOG_DEBUG);
     }
 
     if (!$this->object) {
-        if (!$this->container) {
-            $this->getContainer();
-        }
-        $target = file_uri_target($this->uri);
-        //create it if it doesnt exist
-        $this->object = $this->container->create_object($target);
+      if (!$this->container) {
+        $this->getContainer();
+      }
+      $target = file_uri_target($this->uri);
+      // Create it if it doesnt exist.
+      $this->object = $this->container->create_object($target);
     }
-    //rackspace will error if there is no content_type
-    //it would use the PHP fileinfo library, but that might not be available
+
     if (!$this->object->content_type) {
-        $this->object->content_type = $this->getMimeType($this->uri);
+      // Rackspace will error if there is no content_type.
+      $this->object->content_type = $this->getMimeType($this->uri);
     }
     if ($this->write) {
-        $this->object->write($this->stream_data);
+      // TODO: We should probalby return the result of this.
+      $this->object->write($this->stream_data);
     }
-    //$this->object = NULL;
     $this->stream_data = NULL;
     $this->stream_pointer = 0;
     return TRUE;
+  }
   }
 
   /**
