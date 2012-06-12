@@ -6,6 +6,30 @@
  */
 
 /**
+ * Get the Cloud files container entity by name
+ *
+ * @param $name
+ *   The container name.
+ *
+ * @return
+ *   A CloudFilesContainer entity if found, or FALSE.
+ */
+function cloud_files_get_container($name) {
+  $query = EntityFieldQuery();
+  $result = $query
+    ->entityCondition('entity_type', 'cloud_files_container')
+    ->propertyCondition('name', $name, '=')
+    ->range(0, 1)
+    ->execute();
+
+  if (empty($result['cloud_files_container'])) {
+    return FALSE;
+  }
+  $id = key($result['cloud_files_container']);
+  return entity_load_single('cloud_files_container', $id);
+}
+
+/**
  * Implements hook_menu().
  */
 function cloud_files_menu() {

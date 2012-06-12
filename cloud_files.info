@@ -1,6 +1,7 @@
 name = Cloud Files
 description = FileStreamWrappers for Rackspace Cloud Files storage
 dependencies[] = libraries
+dependencies[] = entity
 package = Media
 core = 7.x
 
