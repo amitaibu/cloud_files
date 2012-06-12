@@ -73,6 +73,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    */
   function setUri($uri) {
     $this->uri = $uri;
+    $this->getCloudFilesContainer();
   }
 
   /**
@@ -143,6 +144,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "executing getExternalUrl (%uri)", array('%uri' => $this->uri), WATCHDOG_DEBUG);
     }
 
+    $this->getCloudFilesContainer();
+
     $target = file_uri_target($this->uri);
     $path = explode("/", $target);
 
@@ -168,8 +171,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
     else {
-      $this->getCloudFilesContainer();
-
       if (!$this->cloud_files_container->published) {
         // TODO: If container is private and temp URL is allowed, get_temp_url
         // Otherwise return FALSE;
@@ -515,6 +516,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    * @see http://php.net/manual/en/streamwrapper.url-stat.php
    */
   public function url_stat($uri, $flags) {
+    $this->getCloudFilesContainer();
     if ($uri == NULL) {
       $uri = $this->uri;
     }
@@ -786,7 +788,16 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       return;
     }
     $info = explode('/', file_uri_target($this->uri));
-    $name = strpos($info[0], '__') === 0 ? substr($info[0], 2) : variable_get('rackspace_cloud_container');
+    if (strpos($info[0], '__') === 0) {
+      $name = substr($info[0], 2);
+      // Yank the container name from the URI.
+      unset($info[0]);
+      $this->uri = 'rcf://' . implode('/', $info);
+    }
+    else {
+      $name = variable_get('rackspace_cloud_container');
+    }
+
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }
