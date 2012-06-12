@@ -21,7 +21,7 @@ function cloud_files_get_container($name) {
   }
 
   $cache[$name] = FALSE;
-  $query = EntityFieldQuery();
+  $query = new EntityFieldQuery();
   $result = $query
     ->entityCondition('entity_type', 'cloud_files_container')
     ->propertyCondition('name', $name, '=')

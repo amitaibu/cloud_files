@@ -109,7 +109,7 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
   $auth_url = $form_state['values']['rackspace_cloud_auth_url'];
 
   $authenticated = FALSE;
-  if (variable_get('rackspace_cloud_username') != $user || variable_get('rackspace_cloud_api_key') != $apikey || variable_set('rackspace_cloud_auth_url') != $auth_url) {
+  if (variable_get('rackspace_cloud_username') != $user || variable_get('rackspace_cloud_api_key') != $apikey || variable_get('rackspace_cloud_auth_url') != $auth_url) {
     try {
       $auth = new CF_Authentication($user, $apikey, NULL, $auth_url);
       if ($auth->authenticate()) {
