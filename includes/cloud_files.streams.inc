@@ -52,6 +52,11 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   protected $container = NULL;
 
   /**
+   * Container name.
+   */
+  protected $container_name = NULL;
+
+  /**
    * Data is not written to rackspace in stream_write to minimize requests
    * to rackspace. instead, data is written to the $stream_data property.
    * This $write property is flagged as true, and in stream_flush, all the
@@ -63,8 +68,23 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
   /**
    * Implements setUri().
+   *
+   * Set the container by one passed via URL, and remove it from the
+   * URI. If a container does not exist, then add the default one.
    */
   function setUri($uri) {
+    $info = explode('/', file_uri_target($uri));
+    if (strpos($info[0], '__') === 0) {
+      // The container already exists in the URI.
+      $this->container = substr($info[0], 2);
+      unset($info[0]);
+      $uri = implode('/', $info);
+    }
+    else {
+      // Add the default container.
+      $this->container = variable_get('rackspace_cloud_container');
+    }
+
     $this->uri = $uri;
   }
 
@@ -75,9 +95,18 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     return $this->uri;
   }
 
-  function __construct() {
-    // Set the container by one passed via URL, and remove it from the
-    // URI. If a container does not exist, then add the default one.
+  /**
+   * Set the container.
+   */
+  public function setContainerName($container_name) {
+    $this->container_name = $container_name;
+  }
+
+  /**
+   * Get the container.
+   */
+  public function getContainerName() {
+    return $this->container_name;
   }
 
   /**
@@ -154,7 +183,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         //exceptions are expensive, but unfortunately RS doesnt provide a better way to check if a file exists
         try{
           $this->object = $this->container->get_object($target);
-        } catch (NoSuchObjectException $e) {
+        }
+        catch (NoSuchObjectException $e) {
           // Image styles support
           // image is generated when its first requested, so serve from the private file system
           // this will save the file to rackspace and it'll exist next and wont error into this
@@ -167,8 +197,14 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
 
-    $url = 'http://' . variable_get('rackspace_cloud_cdn_domain') . '/' . $target;
-    return $url;
+    $cf_container = $this->container->cf_container;
+    if ($cf_container->private) {
+      // TODO: If container is private and temp URL is allowed, get_temp_url
+      // Otherwise return FALSE;
+    }
+    else {
+      return 'http://' . $cf_container->cdn_domain . '/' . $target;
+    }
   }
 
   /**
@@ -269,17 +305,14 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     //if the data is empty, get the data from the object
     //this stores all the data in the $stream_data property, only request once
     if (!$this->stream_data) {
-        //if the object is empty, get the object from rackspace
-        if (!$this->object) {
-            if (!isset($this->container)) {
-                $this->getContainer();
-            }
-            $this->object = $this->container->get_object($target);
+      //if the object is empty, get the object from rackspace
+      if (!$this->object) {
+        if (!isset($this->container)) {
+          $this->getContainer();
         }
-        $this->stream_data = $this->object->read();
-        //$temp = fopen("temporary://testfile","w");
-        //$this->stream_data = $object->stream($temp);
-        //fclose($temp);
+        $this->object = $this->container->get_object($target);
+      }
+      $this->stream_data = $this->object->read();
     }
     $data = substr($this->stream_data, $this->stream_pointer, $count);
     $this->stream_pointer += $count;
@@ -536,10 +569,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $this->uri = $uri;
     $target = $this->getLocalPath($uri);
 
-    if (!isset($this->object)) {
-        if (!isset($this->container)) {
-            $this->getContainer();
-        }
+    if (!isset($this->object) && !isset($this->container)) {
+      $this->getContainer();
     }
 
     //check if the file exists
@@ -548,7 +579,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       if (!empty($target)) {
         $this->object = $this->container->get_object($target);
       }
-    } catch (NoSuchObjectException $e) {
+    }
+    catch (NoSuchObjectException $e) {
       //$file = $cont->create_object($target);
       $objexists = FALSE;
     }
@@ -775,7 +807,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "requesting container from Rackspace (%container)", array('%container' => variable_get('rackspace_cloud_container')), WATCHDOG_DEBUG);
     }
 
-    $this->container = $conn->get_container(variable_get('rackspace_cloud_container'));
+    $this->container = $conn->get_container($this->container_name);
+    // TODO: Add the Cloud files container entity to $this->container.
   }
 
   public function getAuthentication() {

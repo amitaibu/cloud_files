@@ -17,13 +17,13 @@ function cloud_files_admin_settings() {
     '#type' => 'radios',
     '#title' => t('Authentication URL'),
     '#description' => t('Select "United States" if your account was created via rackspacecloud.com. Select "United Kingdom" if your account was created via rackspace.co.uk.'),
-    '#required' => TRUE,
     '#options' => array(
       US_AUTHURL => t('United States'),
       UK_AUTHURL => t('United Kingdom'),
       'other'    => t('Other'),
     ),
     '#default_value' => $default_value,
+    '#required' => TRUE,
   );
 
   $other_url = !in_array($default_value, array(US_AUTHURL, UK_AUTHURL)) ? $default_value : '';
@@ -56,6 +56,7 @@ function cloud_files_admin_settings() {
     '#title' => t('API Key'),
     '#description' => t('Rackspace Cloud API Key.'),
     '#default_value' => $rackspace_cloud_api_key,
+    '#required' => TRUE,
   );
 
   $form['rackspace_cloud_container'] = array(
@@ -134,5 +135,4 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
   if ($authenticated) {
     // Validate the default container.
   }
-
 }

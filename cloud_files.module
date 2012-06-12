@@ -36,15 +36,22 @@ function cloud_files_permissions() {
 
 /**
  * Implements hook_stream_wrappers().
+ *
+ * TODO: Improve requirements.
+ * As we cannot use hook_requirements, since the library isn't defined yet
+ * we don't load the streamwrappers.
  */
 function cloud_files_stream_wrappers() {
-  return array(
-    'rcf' => array(
-      'name' => t('Rackspace Cloud Files'),
-      'class' => 'RackspaceCloudFilesStreamWrapper',
-      'description' => t('Rackspace Cloud Files.'),
-    ),
-  );
+  $info = libraries_load('rackspace');
+  if (!empty($info['loaded'])) {
+    return array(
+      'rcf' => array(
+        'name' => t('Rackspace Cloud Files'),
+        'class' => 'RackspaceCloudFilesStreamWrapper',
+        'description' => t('Rackspace Cloud Files.'),
+      ),
+    );
+  }
 }
 
 /**
