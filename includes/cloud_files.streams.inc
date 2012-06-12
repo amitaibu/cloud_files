@@ -153,7 +153,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       if (!isset($this->object)) {
         //exceptions are expensive, but unfortunately RS doesnt provide a
         // better way to check if a file exists.
-        try{
+        try {
           $this->getContainer();
           $this->object = $this->container->get_object($target);
         }
@@ -169,20 +169,19 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         }
       }
     }
+
+    if (!$container->published) {
+      if ($key = variable_get('rackspace_cloud_temp_url_key')) {
+        // TODO: Change to variable.
+        $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
+        // TODO: Allow define HTTP method to PUT as-well?
+        return $this->object->get_temp_url($key, $expires, 'GET');
+      }
+      // TODO: If container is private and temp URL is allowed, get_temp_url
+      // Otherwise return FALSE;
+    }
     else {
-      if (!$container->published) {
-        if ($key = variable_get('rackspace_cloud_temp_url_key')) {
-          // TODO: Change to variable.
-          $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
-          // TODO: Allow define HTTP method to PUT as-well?
-          return $this->object->get_temp_url($key, $expires, 'GET');
-        }
-        // TODO: If container is private and temp URL is allowed, get_temp_url
-        // Otherwise return FALSE;
-      }
-      else {
-        return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
-      }
+      return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
     }
   }
 
