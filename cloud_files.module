@@ -134,6 +134,23 @@ function cloud_files_entity_info() {
   return $items;
 }
 
+/**
+ * Implements hook_file_presave().
+ *
+ * Add default container, if doesn't exist in the URL.
+ */
+function cloud_files_file_presave($file) {
+  if (strpos($file->uri, 'rcf://') !== 0) {
+    return;
+  }
+
+  $target = file_uri_target($file->uri);
+  $info = explode('/', $target);
+  if (strpos($info[0], '__') !== 0) {
+    // The container doesn't exists in the URI, so add the default one.
+    $file->uri = 'rcf://__' . variable_get('rackspace_cloud_container') . '/' . $target;
+  }
+}
 
 /**
  * Get Cloud files authentication.

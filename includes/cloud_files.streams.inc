@@ -180,14 +180,12 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $target = file_uri_target($this->uri);
     $path = explode("/", $target);
 
+
     // if its a request for styles, need to check if it exists
     if ($path[0] == 'styles') {
       if (!isset($this->object)) {
-        if (!isset($this->container)) {
-          $this->getContainer();
-        }
-
-        //exceptions are expensive, but unfortunately RS doesnt provide a better way to check if a file exists
+        //exceptions are expensive, but unfortunately RS doesnt provide a
+        // better way to check if a file exists.
         try{
           $this->object = $this->container->get_object($target);
         }
