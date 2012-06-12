@@ -58,35 +58,13 @@ function cloud_files_admin_settings() {
     '#default_value' => $rackspace_cloud_api_key,
   );
 
-  // Try to get the containers list
-  if ($rackspace_cloud_username && $rackspace_cloud_api_key) {
-    try {
-      $auth = cloud_files_get_authentication();
-      $conn = new CF_Connection($auth);
-      $container_list = $conn->list_containers();
-
-      $container_options = array();
-      foreach ($container_list as $container) {
-        if ($container != '.CDN_ACCESS_LOGS') {
-          // Get all container names, not including the access log
-          // container.
-          $container_options[$container] = $container;
-        }
-      }
-      $form['rackspace_cloud_container'] = array(
-        '#type' => 'select',
-        '#title' => t('Container'),
-        '#description' => t('Default Rackspace Cloud Container name.'),
-        '#options' => $container_options,
-        '#default_value' => variable_get('rackspace_cloud_container'),
-        '#required' => TRUE,
-        '#access' => $container_options,
-      );
-    }
-    catch (Exception $e) {
-      drupal_set_message(t('Error getting container list.'), 'error');
-    }
-  }
+  $form['rackspace_cloud_container'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default container'),
+    '#description' => t('Default Rackspace Cloud Container name.'),
+    '#default_value' => variable_get('rackspace_cloud_container'),
+    '#required' => TRUE,
+  );
 
   $form['rackspace_cloud_cdn_domain'] = array(
     '#type' => 'value',
@@ -130,19 +108,31 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
   }
   $auth_url = $form_state['values']['rackspace_cloud_auth_url'];
 
-  try {
-    $auth = new CF_Authentication($user, $apikey, NULL, $auth_url);
-    if ($auth->authenticate()) {
-      // Authentication is correct.
-      variable_set('rackspace_cloud_username',$user);
-      variable_set('rackspace_cloud_api_key',$apikey);
-      variable_set('rackspace_cloud_auth_url',$auth_url);
+  $authenticated = FALSE;
+  if (variable_get('rackspace_cloud_username') != $user || variable_get('rackspace_cloud_api_key') != $apikey || variable_set('rackspace_cloud_auth_url') != $auth_url) {
+    try {
+      $auth = new CF_Authentication($user, $apikey, NULL, $auth_url);
+      if ($auth->authenticate()) {
+        // Authentication is correct.
+        $authenticated = TRUE;
+        variable_set('rackspace_cloud_username', $user);
+        variable_set('rackspace_cloud_api_key', $apikey);
+        variable_set('rackspace_cloud_auth_url', $auth_url);
+      }
+    }
+    catch (AuthenticationException $e) {
+      form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Invalid Username or API Key.'));
+    }
+    catch (Exception $e) {
+      form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Error authenticating. Please check the Username and/or API Key.'));
     }
   }
-  catch (AuthenticationException $e) {
-    form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Invalid Username or API Key.'));
+  else {
+    $authenticated = TRUE;
   }
-  catch (Exception $e) {
-    form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Error authenticating. Please check the Username and/or API Key.'));
+
+  if ($authenticated) {
+    // Validate the default container.
   }
+
 }
