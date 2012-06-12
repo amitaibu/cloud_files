@@ -52,7 +52,7 @@ function cloud_files_admin_settings() {
   );
 
   $form['rackspace_cloud_api_key'] = array(
-    '#type' => 'password',
+    '#type' => 'textfield',
     '#title' => t('API Key'),
     '#description' => t('Rackspace Cloud API Key.'),
     '#default_value' => $rackspace_cloud_api_key,
@@ -67,18 +67,21 @@ function cloud_files_admin_settings() {
 
       $container_options = array();
       foreach ($container_list as $container) {
-        $container_options[$container] = $container;
+        if ($container != '.CDN_ACCESS_LOGS') {
+          // Get all container names, not including the access log
+          // container.
+          $container_options[$container] = $container;
+        }
       }
-      if ($container_list) {
-        $form['rackspace_cloud_container'] = array(
-          '#type' => 'select',
-          '#title' => t('Container'),
-          '#description' => t('Default Rackspace Cloud Container name.'),
-          '#default_value' => $container_options,
-          '#required' => TRUE,
-          '#access' => $container_options,
-        );
-      }
+      $form['rackspace_cloud_container'] = array(
+        '#type' => 'select',
+        '#title' => t('Container'),
+        '#description' => t('Default Rackspace Cloud Container name.'),
+        '#options' => $container_options,
+        '#default_value' => variable_get('rackspace_cloud_container'),
+        '#required' => TRUE,
+        '#access' => $container_options,
+      );
     }
     catch (Exception $e) {
       drupal_set_message(t('Error getting container list.'), 'error');
@@ -141,17 +144,5 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
   }
   catch (Exception $e) {
     form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Error authenticating. Please check the Username and/or API Key.'));
-  }
-
-  //if there is not a domain set, get the container domain
-  if (!$rackspace_cloud_cdn_domain) {
-    try {
-      $conn = new CF_Connection($auth);
-      $container = $conn->get_container($container);
-      $form_state['values']['rackspace_cloud_cdn_domain'] = str_replace(array('http://', 'https://'), '', $container->cdn_uri);
-    }
-    catch (Exception $e) {
-      form_set_error('rackspace_cloud_container', t('Container does not exist.'));
-    }
   }
 }
