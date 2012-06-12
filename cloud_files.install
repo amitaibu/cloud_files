@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the Media: Amazon module.
+ * Install, update and uninstall functions for the CLoud files module.
  */
 
 /**
@@ -14,4 +14,31 @@ function cloud_files_uninstall() {
   variable_del('rackspace_cloud_container');
   variable_del('rackspace_cloud_cdn_domain');
   variable_del('rackspace_cloud_auth_url');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function cloud_files_requirements() {
+  $t = get_t();
+  $requirements = array();
+
+  $info = libraries_load('rackspace');
+  if (!$info['loaded']) {
+    $requirements['cloud_files'] = array(
+      'severity' => REQUIREMENT_ERROR,
+      'title' => $t('Rackspace Cloud Files PHP API'),
+      'value' => $t('Failed to load the Rackspace Cloud Files PHP API'),
+      'description' => $t('Please make sure the Rackspace Cloud Files PHP API library is installed in the libraries directory (libraries\rackspace\php-cloudfiles).'),
+    );
+  }
+  else {
+    $requirements['cloud_files'] = array(
+      'severity' => REQUIREMENT_INFO,
+      'title' => $t('Cloud Files'),
+      'value' => $info['version'],
+    );
+  }
+
+  return $requirements;
 }
