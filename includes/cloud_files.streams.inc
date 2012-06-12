@@ -797,7 +797,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if (!$name = cloud_files_get_container_cache($this->uri)) {
       $name = variable_get('rackspace_cloud_container');
     }
-    dpm($this->cloud_files_container);
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }

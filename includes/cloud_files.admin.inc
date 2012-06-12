@@ -62,7 +62,7 @@ function cloud_files_admin_settings() {
   $form['rackspace_cloud_temp_url_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Temp URL key'),
-    '#description' => t('The secret key needed for creating temporary URLs.'),
+    '#description' => t('The secret key needed for creating <a href="http://docs.rackspace.com/files/api/v1/cf-devguide/content/Set_Account_Metadata-d1a4460.html">temporary URLs<a/>.'),
     '#default_value' => variable_get('rackspace_cloud_temp_url_key'),
   );
 
