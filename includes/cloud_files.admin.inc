@@ -12,36 +12,30 @@ function cloud_files_admin_settings() {
   libraries_load('rackspace');
 
   $default_value = variable_get('rackspace_cloud_auth_url', US_AUTHURL);
-  $options = array(
-    US_AUTHURL => t('United States'),
-    UK_AUTHURL => t('United Kingdom'),
-  );
-
-  if (in_array($default_value, array(US_AUTHURL, UK_AUTHURL))) {
-    $key = 'other';
-    $other_url = '';
-  }
-  else {
-    $key = $default_value;
-    $other_url = $default_value;
-  }
-
-
-  $options[$key] = t('Other');
 
   $form['rackspace_cloud_auth_url'] = array(
     '#type' => 'radios',
     '#title' => t('Authentication URL'),
     '#description' => t('Select "United States" if your account was created via rackspacecloud.com. Select "United Kingdom" if your account was created via rackspace.co.uk.'),
     '#required' => TRUE,
-    '#options' => $options,
+    '#options' => array(
+      US_AUTHURL => t('United States'),
+      UK_AUTHURL => t('United Kingdom'),
+      'other'    => t('Other'),
+    ),
     '#default_value' => $default_value,
   );
 
+  $other_url = !in_array($default_value, array(US_AUTHURL, UK_AUTHURL)) ? $default_value : '';
   $form['rackspace_cloud_auth_url_other'] = array(
     '#type' => 'textfield',
     '#title' => t('Other authentication URL'),
     '#default_value' => $other_url,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="rackspace_cloud_auth_url"]' => array('value' => 'other'),
+      ),
+    ),
   );
 
   $rackspace_cloud_username = variable_get('rackspace_cloud_username');

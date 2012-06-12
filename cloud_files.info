@@ -1,12 +1,9 @@
 name = Cloud Files
 description = FileStreamWrappers for Rackspace Cloud Files storage
-
+dependencies[] = libraries
 package = Media
 core = 7.x
 
-files[] = cloud_files.module
-files[] = rackspacecloudfiles_streams.inc
-
+files[] = includes/cloud_files.streams.inc
 configure = admin/config/media/cloud-files
 
-dependencies[] = libraries

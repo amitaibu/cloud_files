@@ -23,8 +23,9 @@ function cloud_files_requirements() {
   $t = get_t();
   $requirements = array();
 
+  // TODO: Fix this, as library can't load yet.
   $info = libraries_load('rackspace');
-  if (!$info['loaded']) {
+  if (empty($info['loaded'])) {
     $requirements['cloud_files'] = array(
       'severity' => REQUIREMENT_ERROR,
       'title' => $t('Rackspace Cloud Files PHP API'),
