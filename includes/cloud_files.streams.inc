@@ -70,23 +70,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
   /**
    * Implements setUri().
-   *
-   * Set the container by one passed via URL, and remove it from the
-   * URI. If a container does not exist, then add the default one.
    */
   function setUri($uri) {
-    $info = explode('/', file_uri_target($uri));
-    if (strpos($info[0], '__') === 0) {
-      // The container already exists in the URI.
-      $this->container_name = substr($info[0], 2);
-      unset($info[0]);
-      $uri = implode('/', $info);
-    }
-    else {
-      // Add the default container.
-      $this->container_name = variable_get('rackspace_cloud_container');
-    }
-
     $this->uri = $uri;
   }
 
@@ -184,6 +169,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
     else {
+      return;
       $this->getCloudFilesContainer();
 
       if (!$this->cloud_files_container->pubished) {
@@ -769,7 +755,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   }
 
   public function getContainer() {
-    if ($this->container) {
+    if (!empty($this->container)) {
       return;
     }
     libraries_load('rackspace');
@@ -780,7 +766,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "requesting container from Rackspace (%container)", array('%container' => variable_get('rackspace_cloud_container')), WATCHDOG_DEBUG);
     }
 
-    $this->container = $conn->get_container($this->container_name);
+    $this->getCloudFilesContainer();
+    $this->container = $conn->get_container($this->cloud_files_container->name);
   }
 
   public function getAuthentication() {
@@ -797,11 +784,11 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    *   A CloudFilesContainer entity.
    */
   private function getCloudFilesContainer() {
-    if ($this->$cloud_files_container) {
+    if (!empty($this->cloud_files_container)) {
       return;
     }
     $info = explode('/', file_uri_target($this->uri));
     $name = strpos($info[0], '__') === 0 ? substr($info[0], 2) : variable_get('rackspace_cloud_container');
-    $this->$cloud_files_container = cloud_files_get_container($name);
+    $this->cloud_files_container = cloud_files_get_container($name);
   }
 }
