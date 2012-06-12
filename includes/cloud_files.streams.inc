@@ -146,7 +146,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $target = file_uri_target($this->uri);
     $path = explode("/", $target);
 
-
     // if its a request for styles, need to check if it exists
     if ($path[0] == 'styles') {
       if (!isset($this->object)) {
@@ -169,10 +168,9 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
     else {
-      return;
       $this->getCloudFilesContainer();
 
-      if (!$this->cloud_files_container->pubished) {
+      if (!$this->cloud_files_container->published) {
         // TODO: If container is private and temp URL is allowed, get_temp_url
         // Otherwise return FALSE;
       }
