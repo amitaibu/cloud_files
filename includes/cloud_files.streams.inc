@@ -145,6 +145,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     }
 
     $this->getCloudFilesContainer();
+    $container = $this->cloud_files_container;
 
     $target = file_uri_target($this->uri);
     $path = explode("/", $target);
@@ -171,7 +172,13 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
     else {
-      if (!$this->cloud_files_container->published) {
+      if (!$container->published) {
+        if ($key = variable_get('rackspace_cloud_temp_url_key')) {
+          // TODO: Change to variable.
+          $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
+          // TODO: Allow define HTTP method to PUT as-well?
+          return $this->object->get_temp_url($key, $expires, 'GET');
+        }
         // TODO: If container is private and temp URL is allowed, get_temp_url
         // Otherwise return FALSE;
       }
@@ -790,6 +797,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if (!$name = cloud_files_get_container_cache($this->uri)) {
       $name = variable_get('rackspace_cloud_container');
     }
+    dpm($this->cloud_files_container);
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }

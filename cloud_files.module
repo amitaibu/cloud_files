@@ -65,7 +65,7 @@ function cloud_files_file_presave($file) {
 
   $wrapper = entity_metadata_wrapper('file', $file);
   $container = cloud_files_get_container($name);
-  $wrapper->cloud_files_container->set($name);
+  $wrapper->cloud_files_container->set($container);
 
   // Clear the cache.
   ctools_object_cache_clear('cloud_files', $file->uri);

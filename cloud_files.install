@@ -101,5 +101,6 @@ function cloud_files_uninstall() {
   variable_del('rackspace_cloud_container');
   variable_del('rackspace_cloud_cdn_domain');
   variable_del('rackspace_cloud_auth_url');
+  variable_del('rackspace_cloud_temp_url_key');
 }
 

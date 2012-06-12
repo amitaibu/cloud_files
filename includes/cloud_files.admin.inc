@@ -59,6 +59,14 @@ function cloud_files_admin_settings() {
     '#required' => TRUE,
   );
 
+  $form['rackspace_cloud_temp_url_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Temp URL key'),
+    '#description' => t('The secret key needed for creating temporary URLs.'),
+    '#default_value' => variable_get('rackspace_cloud_temp_url_key'),
+  );
+
+
   $form['rackspace_cloud_container'] = array(
     '#type' => 'textfield',
     '#title' => t('Default container'),
