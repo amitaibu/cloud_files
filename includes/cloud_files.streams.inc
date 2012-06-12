@@ -52,11 +52,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   protected $container = NULL;
 
   /**
-   * Container name.
-   */
-  protected $container_name = NULL;
-
-  /**
    * The Cloud files container entity.
    *
    * @var CloudFilesContainer
@@ -100,20 +95,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    */
   function getUri() {
     return $this->uri;
-  }
-
-  /**
-   * Set the container.
-   */
-  public function setContainerName($container_name) {
-    $this->container_name = $container_name;
-  }
-
-  /**
-   * Get the container.
-   */
-  public function getContainerName() {
-    return $this->container_name;
   }
 
   /**
@@ -187,6 +168,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         //exceptions are expensive, but unfortunately RS doesnt provide a
         // better way to check if a file exists.
         try{
+          $this->getContainer();
           $this->object = $this->container->get_object($target);
         }
         catch (NoSuchObjectException $e) {
@@ -201,13 +183,16 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         }
       }
     }
-
-    if (!$this->cloud_files_container->pubished) {
-      // TODO: If container is private and temp URL is allowed, get_temp_url
-      // Otherwise return FALSE;
-    }
     else {
-      return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
+      $this->getCloudFilesContainer();
+
+      if (!$this->cloud_files_container->pubished) {
+        // TODO: If container is private and temp URL is allowed, get_temp_url
+        // Otherwise return FALSE;
+      }
+      else {
+        return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
+      }
     }
   }
 
@@ -261,10 +246,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     $this->uri = $uri;
     $target = file_uri_target($this->uri);
-
-    if (!isset($this->container)) {
-        $this->getContainer();
-    }
+    $this->getContainer();
 
     //this will load the object if it exists
     $this->object = $this->container->create_object($target);
@@ -311,9 +293,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if (!$this->stream_data) {
       //if the object is empty, get the object from rackspace
       if (!$this->object) {
-        if (!isset($this->container)) {
-          $this->getContainer();
-        }
+        $this->getContainer();
         $this->object = $this->container->get_object($target);
       }
       $this->stream_data = $this->object->read();
@@ -357,17 +337,12 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     //if the data is empty, get the data from the object
     //this stores all the data in the $stream_data property, only request once
     if (!$this->stream_data) {
-        //if the object is empty, get the object from rackspace
-        if (!$this->object) {
-            if (!isset($this->container)) {
-                $this->getContainer();
-            }
-            $this->object = $this->container->get_object($target);
-        }
-        $this->stream_data = $this->object->read();
-        //$temp = fopen("temporary://testfile","w");
-        //$this->stream_data = $object->stream($temp);
-        //fclose($temp);
+      //if the object is empty, get the object from rackspace
+      if (!$this->object) {
+        $this->getContainer();
+        $this->object = $this->container->get_object($target);
+      }
+      $this->stream_data = $this->object->read();
     }
     return $this->stream_pointer >= strlen($this->stream_data);
   }
@@ -425,9 +400,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     }
 
     if (!$this->object) {
-      if (!$this->container) {
-        $this->getContainer();
-      }
+      $this->getContainer();
       $target = file_uri_target($this->uri);
       // Create it if it doesnt exist.
       $this->object = $this->container->create_object($target);
@@ -512,9 +485,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "executing unlink", NULL, WATCHDOG_DEBUG);
     }
 
-    if (!isset($this->container)) {
-        $this->getContainer();
-    }
+    $this->getContainer();
     return $this->container->delete_object($this->getLocalPath($uri));
   }
 
@@ -572,11 +543,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     $this->uri = $uri;
     $target = $this->getLocalPath($uri);
-
-
-    if (!isset($this->object) && !isset($this->container)) {
-      $this->getContainer();
-    }
+    $this->getContainer();
 
     //check if the file exists
     $objexists = TRUE;
@@ -683,9 +650,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       //TODO check options for recursive?
       $recursive = (bool) ($options & STREAM_MKDIR_RECURSIVE);
 
-      if (!isset($this->container)) {
-        $this->getContainer();
-      }
+      $this->getContainer();
 
       //create_paths will create virtual folder files in Rackspace Cloud Files
       //this expects the a full path to a file
@@ -804,6 +769,9 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   }
 
   public function getContainer() {
+    if ($this->container) {
+      return;
+    }
     libraries_load('rackspace');
     $auth = $this->getAuthentication();
     $conn = new CF_Connection($auth);
@@ -812,26 +780,28 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "requesting container from Rackspace (%container)", array('%container' => variable_get('rackspace_cloud_container')), WATCHDOG_DEBUG);
     }
 
-    if (!$this->container_name) {
-      $info = explode('/', file_uri_target($this->uri));
-      if (strpos($info[0], '__') === 0) {
-        // The container already exists in the URI.
-        $this->container_name = substr($info[0], 2);
-        unset($info[0]);
-        $this->uri = implode('/', $info);
-      }
-      else {
-        // Add the default container.
-        $this->container_name = variable_get('rackspace_cloud_container');
-      }
-    }
-
     $this->container = $conn->get_container($this->container_name);
-    // Get Drupal's Cloud files container entity.
-    $this->cloud_files_container = cloud_files_get_container($this->container_name);
   }
 
   public function getAuthentication() {
     return cloud_files_get_authentication();
+  }
+
+  /**
+   * Get the Cloud files container entity.
+   *
+   * The container may exist in the URI, othewise, get the default
+   * container.
+   *
+   * @return
+   *   A CloudFilesContainer entity.
+   */
+  private function getCloudFilesContainer() {
+    if ($this->$cloud_files_container) {
+      return;
+    }
+    $info = explode('/', file_uri_target($this->uri));
+    $name = strpos($info[0], '__') === 0 ? substr($info[0], 2) : variable_get('rackspace_cloud_container');
+    $this->$cloud_files_container = cloud_files_get_container($name);
   }
 }
