@@ -57,6 +57,13 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   protected $container_name = NULL;
 
   /**
+   * The Cloud files container entity.
+   *
+   * @var CloudFilesContainer
+   */
+  protected $cloud_files_container = NULL;
+
+  /**
    * Data is not written to rackspace in stream_write to minimize requests
    * to rackspace. instead, data is written to the $stream_data property.
    * This $write property is flagged as true, and in stream_flush, all the
@@ -808,7 +815,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     }
 
     $this->container = $conn->get_container($this->container_name);
-    // TODO: Add the Cloud files container entity to $this->container.
+    // Get Drupal's Cloud files container entity.
+    $this->cloud_files_container = cloud_files_get_container($this->container_name);
   }
 
   public function getAuthentication() {

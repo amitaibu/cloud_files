@@ -15,6 +15,12 @@
  *   A CloudFilesContainer entity if found, or FALSE.
  */
 function cloud_files_get_container($name) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  if (isset($cache[$name])) {
+    return entity_load_single('cloud_files_container', $cache[$name]);
+  }
+
+  $cache[$name] = FALSE;
   $query = EntityFieldQuery();
   $result = $query
     ->entityCondition('entity_type', 'cloud_files_container')
@@ -25,8 +31,8 @@ function cloud_files_get_container($name) {
   if (empty($result['cloud_files_container'])) {
     return FALSE;
   }
-  $id = key($result['cloud_files_container']);
-  return entity_load_single('cloud_files_container', $id);
+  $cache[$name] = key($result['cloud_files_container']);
+  return entity_load_single('cloud_files_container', $cache[$name]);
 }
 
 /**
