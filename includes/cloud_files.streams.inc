@@ -83,13 +83,13 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $info = explode('/', file_uri_target($uri));
     if (strpos($info[0], '__') === 0) {
       // The container already exists in the URI.
-      $this->container = substr($info[0], 2);
+      $this->container_name = substr($info[0], 2);
       unset($info[0]);
       $uri = implode('/', $info);
     }
     else {
       // Add the default container.
-      $this->container = variable_get('rackspace_cloud_container');
+      $this->container_name = variable_get('rackspace_cloud_container');
     }
 
     $this->uri = $uri;
@@ -204,13 +204,12 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
 
-    $cf_container = $this->container->cf_container;
-    if ($cf_container->private) {
+    if (!$this->cloud_files_container->pubished) {
       // TODO: If container is private and temp URL is allowed, get_temp_url
       // Otherwise return FALSE;
     }
     else {
-      return 'http://' . $cf_container->cdn_domain . '/' . $target;
+      return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
     }
   }
 
@@ -576,6 +575,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $this->uri = $uri;
     $target = $this->getLocalPath($uri);
 
+
     if (!isset($this->object) && !isset($this->container)) {
       $this->getContainer();
     }
@@ -812,6 +812,20 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     if (variable_get('rackspace_cloud_debug')) {
       watchdog("cloud_files", "requesting container from Rackspace (%container)", array('%container' => variable_get('rackspace_cloud_container')), WATCHDOG_DEBUG);
+    }
+
+    if (!$this->container_name) {
+      $info = explode('/', file_uri_target($this->uri));
+      if (strpos($info[0], '__') === 0) {
+        // The container already exists in the URI.
+        $this->container_name = substr($info[0], 2);
+        unset($info[0]);
+        $this->uri = implode('/', $info);
+      }
+      else {
+        // Add the default container.
+        $this->container_name = variable_get('rackspace_cloud_container');
+      }
     }
 
     $this->container = $conn->get_container($this->container_name);
