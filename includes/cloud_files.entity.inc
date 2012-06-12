@@ -14,14 +14,14 @@ class CloudFilesContainer extends Entity {
    *
    * @var boolean
    */
-  public $published;
+  public $published = FALSE;
 
   /**
    * The CDN domain URI for a published container.
    *
    * @var string
    */
-  public $cdn_name;
+  public $cdn_domain = '';
 
 
   public function __construct($values = array()) {
