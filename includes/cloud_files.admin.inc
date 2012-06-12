@@ -100,7 +100,6 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
   $user = $form_state['values']['rackspace_cloud_username'];
   $apikey = $form_state['values']['rackspace_cloud_api_key'] ? $form_state['values']['rackspace_cloud_api_key'] : variable_get('rackspace_cloud_api_key');
   $container = $form_state['values']['rackspace_cloud_container'];
-  $rackspace_cloud_cdn_domain = $form_state['values']['rackspace_cloud_cdn_domain'];
 
   if ($form_state['values']['rackspace_cloud_auth_url'] == 'other') {
     // If using Other authentication URL, set its value from the text

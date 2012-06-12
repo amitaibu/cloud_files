@@ -2,8 +2,52 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the CLoud files module.
+ * Install, update and uninstall functions for the Cloud files module.
  */
+
+/**
+ * Implements hook_schema()
+ */
+function cloud_files_schema() {
+  $schema['cloud_files_container'] = array(
+    'description' => 'Storage for user-defined cloud files containers.',
+    'fields' => array(
+      // Although the "name" should be enough as the primary key, the numeric ID
+      // is required for the internal use of entity API.
+      'container_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Numeric container ID.',
+      ),
+      'name' => array(
+        'description' => 'The unified identifier for a container.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'published' => array(
+        'description' => 'Boolean indicating whether the container is published to CDN.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cdn_domain' => array(
+        'description' => 'The CDN domain URI for a published container.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('container_id'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
+  );
+
+  return $schema;
+}
 
 /**
  * Implements hook_uninstall().

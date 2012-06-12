@@ -76,6 +76,34 @@ function cloud_files_libraries_info() {
     ),
   );
 }
+/**
+ * Implements hook_entity_info().
+ */
+function cloud_files_entity_info() {
+  $items['cloud_files_container'] = array(
+    'label' => t('Cloud files container'),
+    'controller class' => 'EntityAPIController',
+    'entity class' => 'CloudFilesContainer',
+    'base table' => 'cloud_files_container',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'container_id',
+      'label' => 'name',
+    ),
+    'bundles' => array(),
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'module' => 'cloud_files',
+
+  );
+
+  return $items;
+}
+
 
 /**
  * Get Cloud files authentication.

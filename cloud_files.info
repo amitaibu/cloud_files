@@ -5,5 +5,6 @@ package = Media
 core = 7.x
 
 files[] = includes/cloud_files.streams.inc
+files[] = includes/cloud_files.entity.inc
 configure = admin/config/media/cloud-files
 
