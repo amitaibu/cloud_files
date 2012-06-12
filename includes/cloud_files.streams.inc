@@ -230,8 +230,9 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $this->stream_data = NULL;
 
     $this->uri = $uri;
-    $target = file_uri_target($this->uri);
     $this->getContainer();
+
+    $target = file_uri_target($this->uri);
 
     //this will load the object if it exists
     $this->object = $this->container->create_object($target);
@@ -384,8 +385,9 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "flushing file, writing to Rackspace (stream_flush) %file", array('%file' => $this->uri), WATCHDOG_DEBUG);
     }
 
+    $this->getContainer();
+
     if (!$this->object) {
-      $this->getContainer();
       $target = file_uri_target($this->uri);
       // Create it if it doesnt exist.
       $this->object = $this->container->create_object($target);
@@ -516,7 +518,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    * @see http://php.net/manual/en/streamwrapper.url-stat.php
    */
   public function url_stat($uri, $flags) {
-    $this->getCloudFilesContainer();
     if ($uri == NULL) {
       $uri = $this->uri;
     }
@@ -528,8 +529,9 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $mode = 0;
 
     $this->uri = $uri;
-    $target = $this->getLocalPath($uri);
     $this->getContainer();
+    $target = $this->getLocalPath($uri);
+
 
     //check if the file exists
     $objexists = TRUE;
@@ -539,7 +541,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
     catch (NoSuchObjectException $e) {
-      //$file = $cont->create_object($target);
       $objexists = FALSE;
     }
 
@@ -627,7 +628,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     }
 
     $this->uri = $uri;
-
+    $this->getContainer();
     $target = file_uri_target($this->uri);
 
     //only make directories if there are directories to make
@@ -635,8 +636,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       //TODO check if it already exists?
       //TODO check options for recursive?
       $recursive = (bool) ($options & STREAM_MKDIR_RECURSIVE);
-
-      $this->getContainer();
 
       //create_paths will create virtual folder files in Rackspace Cloud Files
       //this expects the a full path to a file

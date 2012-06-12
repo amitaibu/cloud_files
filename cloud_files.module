@@ -36,6 +36,42 @@ function cloud_files_get_container($name) {
 }
 
 /**
+ * Set container for URI.
+ */
+function cloud_files_set_container_cache($uri, $name) {
+  ctools_include('object-cache');
+  $cache = new stdClass;
+  $cache->name = $name;
+  ctools_object_cache_set('cloud_files', $uri, $cache);
+}
+
+/**
+ * Get container for URI
+ */
+function cloud_files_get_container_cache($uri) {
+  ctools_include('object-cache');
+  $cache = ctools_object_cache_get('cloud_files', $uri);
+  return !empty($cache->name) ? $cache->name : FALSE;
+}
+
+/**
+ * Implements hook_file_presave();
+ */
+function cloud_files_file_presave($file) {
+  ctools_include('object-cache');
+  if (!$name = cloud_files_get_container_cache($file->uri)) {
+    return;
+  }
+
+  $wrapper = entity_metadata_wrapper('file', $file);
+  $container = cloud_files_get_container($name);
+  $wrapper->cloud_files_container->set($name);
+
+  // Clear the cache.
+  ctools_object_cache_clear('cloud_files', $file->uri);
+}
+
+/**
  * Implements hook_menu().
  */
 function cloud_files_menu() {

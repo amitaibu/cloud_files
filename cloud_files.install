@@ -39,6 +39,19 @@ function cloud_files_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'temp_url_key' => array(
+        'description' => 'The secret key for the temporary URL.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'temp_url_expire' => array(
+        'description' => 'The expiration time of the temporary URL in seconds.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('container_id'),
     'unique keys' => array(
@@ -47,6 +60,36 @@ function cloud_files_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function cloud_files_install() {
+  // Clear field info cache, so entity reference field can be used.
+  field_info_cache_clear();
+  $field = array(
+    'entity_types' => array('file'),
+    'settings' => array(
+      'handler' => 'base',
+      'target_type' => 'cloud_files_container',
+      'handler_settings' => array(
+        'target_bundles' => array(),
+      ),
+    ),
+    'field_name' => 'cloud_files_container',
+    'type' => 'entityreference',
+    'locked' => TRUE,
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'cloud_files_container',
+    'entity_type' => 'file',
+    'bundle' => 'file',
+    'label' => t('Cloud files container'),
+  );
+  field_create_instance($instance);
 }
 
 /**
