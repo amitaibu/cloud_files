@@ -41,4 +41,30 @@ class CloudFilesContainer extends Entity {
   public function __construct($values = array()) {
     parent::__construct($values, 'cloud_files_container');
   }
+
+  /**
+   * Override Entity::save().
+   *
+   * Verify there is a remote container.
+   */
+  public function save() {
+    if (empty($this->container_id)) {
+      $auth = cloud_files_get_authentication();
+      $conn = new CF_Connection($auth);
+
+      try {
+        $cf_container = $conn->get_container($this->name);
+      }
+      catch (NoSuchContainerException $e) {
+        // Create the remote container.
+        $cf_container = $conn->create_container($this->name);
+
+        if ($this->published) {
+          $cf_container->make_public();
+          $this->cdn_domain = file_uri_target($cf_container->cdn_uri);
+        }
+      }
+    }
+    parent::save();
+  }
 }
