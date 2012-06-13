@@ -114,10 +114,23 @@ function cloud_files_file_presave($file) {
     return;
   }
 
+  $file->type = 'cloud_files';
   $wrapper = entity_metadata_wrapper('file', $file);
   $name = cloud_files_container_cache($file->uri);
   $container = cloud_files_get_container($name);
   $wrapper->cloud_files_container->set($container);
+}
+
+/**
+ * Implements hook_file_type_info().
+ */
+function cloud_files_file_type_info() {
+  return array(
+    'cloud_files' => array(
+      'label' => t('Cloud files'),
+      'description' => t('Cloud files file.'),
+    ),
+  );
 }
 
 /**
@@ -218,28 +231,6 @@ function cloud_files_entity_info() {
   );
 
   return $items;
-}
-
-
-/**
- * Implements hook_modules_enabled().
- *
- * Add Cloud files container reference field.
- *
- * @see cloud_files_install()
- */
-function cloud_files_modules_enabled($modules) {
-  foreach (file_info_file_types() as $type => $value) {
-    if (!field_info_instance('file', 'cloud_files_container', $type)) {
-      $instance = array(
-        'field_name' => 'cloud_files_container',
-        'entity_type' => 'file',
-        'bundle' => $type,
-        'label' => t('Cloud files container'),
-      );
-      field_create_instance($instance);
-    }
-  }
 }
 
 /**

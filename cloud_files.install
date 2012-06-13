@@ -75,6 +75,14 @@ function cloud_files_install() {
     'locked' => TRUE,
   );
   field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'cloud_files_container',
+    'entity_type' => 'file',
+    'bundle' => 'cloud_files',
+    'label' => t('Cloud files container'),
+  );
+  field_create_instance($instance);
 }
 
 /**
