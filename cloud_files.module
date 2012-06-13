@@ -36,6 +36,40 @@ function cloud_files_get_container($name) {
 }
 
 /**
+ * Get the Cloud files container entity by name
+ *
+ * @param $name
+ *   The container name.
+ *
+ * @return
+ *   A CloudFilesContainer entity if found, or FALSE.
+ */
+function cloud_files_get_container_by_uri($uri) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  if (isset($cache[$uri])) {
+    return entity_load_single('cloud_files_container', $cache[$uri]);
+  }
+
+  $cache[$uri] = FALSE;
+  $query = new EntityFieldQuery();
+  $result = $query
+    ->entityCondition('entity_type', 'file')
+    ->propertyCondition('uri', $uri, '=')
+    ->range(0, 1)
+    ->execute();
+
+  if (empty($result['file'])) {
+    return FALSE;
+  }
+  $fid = key($result['file']);
+  $wrapper = entity_metadata_wrapper('file', $fid);
+
+  $cache[$uri] = $wrapper->cloud_files_container->getIdentifier();
+  return $wrapper->cloud_files_container->value();
+
+}
+
+/**
  * Get or Set container for URI.
  *
  * @param $uri
@@ -54,7 +88,19 @@ function cloud_files_container_cache($uri, $name = NULL) {
     return;
   }
   else {
-    return !empty($cache[$uri]) ? $cache[$uri] : variable_get('rackspace_cloud_container');
+    if (!empty($cache[$uri])) {
+      return $cache[$uri];
+    }
+    elseif ($container = cloud_files_get_container_by_uri($uri)) {
+      // Check if the URI belongs to an existing file.
+      $cache[$uri] = $container->name;
+    }
+    else {
+      // Default container.
+      $cache[$uri] = variable_get('rackspace_cloud_container');
+    }
+
+    return $cache[$uri];
   }
 }
 
@@ -64,12 +110,13 @@ function cloud_files_container_cache($uri, $name = NULL) {
  * Add reference to the container entity.
  */
 function cloud_files_file_presave($file) {
-  if (strpos($file->uri, 'rcf://') !== 0) {
+  if (strpos($file->uri, 'rcf://') !== 0 || !empty($file->fid)) {
     return;
   }
 
   $wrapper = entity_metadata_wrapper('file', $file);
-  $container = cloud_files_get_container(cloud_files_container_cache($file->uri));
+  $name = cloud_files_container_cache($file->uri);
+  $container = cloud_files_get_container($name);
   $wrapper->cloud_files_container->set($container);
 }
 
@@ -144,6 +191,7 @@ function cloud_files_libraries_info() {
     ),
   );
 }
+
 /**
  * Implements hook_entity_info().
  */
@@ -170,6 +218,28 @@ function cloud_files_entity_info() {
   );
 
   return $items;
+}
+
+
+/**
+ * Implements hook_modules_enabled().
+ *
+ * Add Cloud files container reference field.
+ *
+ * @see cloud_files_install()
+ */
+function cloud_files_modules_enabled($modules) {
+  foreach (file_info_file_types() as $type => $value) {
+    if (!field_info_instance('file', 'cloud_files_container', $type)) {
+      $instance = array(
+        'field_name' => 'cloud_files_container',
+        'entity_type' => 'file',
+        'bundle' => $type,
+        'label' => t('Cloud files container'),
+      );
+      field_create_instance($instance);
+    }
+  }
 }
 
 /**
