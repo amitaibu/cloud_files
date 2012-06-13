@@ -143,9 +143,10 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "executing getExternalUrl (%uri)", array('%uri' => $this->uri), WATCHDOG_DEBUG);
     }
 
-    $target = file_uri_target($this->uri);
-    $path = explode("/", $target);
+    $target = $this->getLocalPath();
+    $path = explode('/', $target);
 
+    $uri = NULL;
     // if its a request for styles, need to check if it exists
     if ($path[0] == 'styles') {
       if (!isset($this->object)) {
@@ -168,14 +169,13 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
 
-
-    $this->getCloudFilesContainer();
+    $this->getCloudFilesContainer($uri);
     $container = $this->cloud_files_container;
 
     if (!$container->published) {
       if ($key = variable_get('rackspace_cloud_temp_url_key')) {
         try {
-          $this->getContainer();
+          $this->getContainer($uri);
           $this->object = $this->container->get_object($target);
           // TODO: Change to variable.
           $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
@@ -241,9 +241,17 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $this->stream_data = NULL;
 
     $this->uri = $uri;
-    $this->getContainer();
+    $target = $this->getLocalPath();
 
-    $target = file_uri_target($this->uri);
+    $uri = NULL;
+    $path = explode('/', $target);
+    if ($path[0] == 'styles') {
+      // Get the container according to the original file.
+      unset($path[0], $path[1], $path[2]);
+      $uri = 'rcf://' . implode('/', $path);
+    }
+
+    $this->getContainer($uri);
 
     //this will load the object if it exists
     $this->object = $this->container->create_object($target);
