@@ -39,13 +39,6 @@ function cloud_files_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
-      'temp_url_key' => array(
-        'description' => 'The secret key for the temporary URL.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
       'temp_url_expire' => array(
         'description' => 'The expiration time of the temporary URL in seconds.',
         'type' => 'int',
