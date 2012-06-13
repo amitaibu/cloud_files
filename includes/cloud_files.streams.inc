@@ -173,15 +173,18 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     if (!$container->published) {
       if ($key = variable_get('rackspace_cloud_temp_url_key')) {
-        $this->getContainer();
-        $this->object = $this->container->get_object($target);
-        // TODO: Change to variable.
-        $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
-        // TODO: Allow define HTTP method to PUT as-well?
-        return $this->object->get_temp_url($key, $expires, 'GET');
+        try {
+          $this->getContainer();
+          $this->object = $this->container->get_object($target);
+          // TODO: Change to variable.
+          $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
+          // TODO: Allow define HTTP method to PUT as-well?
+          return $this->object->get_temp_url($key, $expires, 'GET');
+        }
+        catch (NoSuchObjectException $e) {
+          return;
+        }
       }
-      // TODO: If container is private and temp URL is allowed, get_temp_url
-      // Otherwise return FALSE;
     }
     else {
       return 'http://' . $this->cloud_files_container->cdn_domain . '/' . $target;
@@ -531,7 +534,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     $cache = &drupal_static(__METHOD__, array());
     if (isset($cache[$uri])) {
-      return $cache[$uri];
+      //return $cache[$uri];
     }
 
 
@@ -803,10 +806,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    *   A CloudFilesContainer entity.
    */
   private function getCloudFilesContainer() {
-    if (!empty($this->cloud_files_container)) {
-      return;
-    }
-
     $name = cloud_files_container_cache($this->uri);
     $this->cloud_files_container = cloud_files_get_container($name);
   }
