@@ -152,18 +152,18 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         //exceptions are expensive, but unfortunately RS doesnt provide a
         // better way to check if a file exists.
         try {
-          $this->getContainer();
+          // Pass the original URI.
+          unset($path[0], $path[1], $path[2]);
+          $uri = 'rcf://' . implode('/', $path);
+          $this->getContainer($uri);
+          // Get the original container.
           $this->object = $this->container->get_object($target);
         }
         catch (NoSuchObjectException $e) {
           // Image styles support
           // image is generated when its first requested, so serve from the private file system
           // this will save the file to rackspace and it'll exist next and wont error into this
-          $path = explode('/', $this->getLocalPath());
-          if ($path[0] == 'styles') {
-            array_shift($path);
-            return url('system/files/styles/' . implode('/', $path), array('absolute' => TRUE));
-          }
+          return url('system/files/' . $this->getLocalPath(), array('absolute' => TRUE));
         }
       }
     }
@@ -772,8 +772,11 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     return "http://" . variable_get('rackspace_cloud_cdn_domain');
   }
 
-  public function getContainer() {
-    $this->getCloudFilesContainer();
+  /**
+   *
+   */
+  public function getContainer($uri = NULL) {
+    $this->getCloudFilesContainer($uri);
     $container = $this->cloud_files_container;
 
     $cache = &drupal_static(__METHOD__, array());
@@ -803,11 +806,15 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    * The container may exist in the URI, othewise, get the default
    * container.
    *
+   * @param $uri
+   *   Optional; The URI to get from cache. This can be used for example
+   *   to get the container of the origianl file for image-styles.
+   *
    * @return
    *   A CloudFilesContainer entity.
    */
-  private function getCloudFilesContainer() {
-    $name = cloud_files_container_cache($this->uri);
+  private function getCloudFilesContainer($uri = NULL) {
+    $name = cloud_files_container_cache($uri ? $uri : $this->uri);
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }
