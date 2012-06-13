@@ -107,7 +107,7 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
 
   $user = $form_state['values']['rackspace_cloud_username'];
   $apikey = $form_state['values']['rackspace_cloud_api_key'] ? $form_state['values']['rackspace_cloud_api_key'] : variable_get('rackspace_cloud_api_key');
-  $container = $form_state['values']['rackspace_cloud_container'];
+  $container_name = $form_state['values']['rackspace_cloud_container'];
 
   if ($form_state['values']['rackspace_cloud_auth_url'] == 'other') {
     // If using Other authentication URL, set its value from the text
@@ -129,17 +129,34 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
       }
     }
     catch (AuthenticationException $e) {
-      form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Invalid Username or API Key.'));
-    }
-    catch (Exception $e) {
-      form_set_error('rackspace_cloud_username][rackspace_cloud_api_key', t('Error authenticating. Please check the Username and/or API Key.'));
+      form_set_error('rackspace_cloud_api_key', t('Invalid Username or API Key.'));
     }
   }
   else {
     $authenticated = TRUE;
   }
 
-  if ($authenticated) {
-    // Validate the default container.
+
+  if ($authenticated && !cloud_files_get_container($container_name)) {
+    $auth = cloud_files_get_authentication();
+    $conn = new CF_Connection($auth);
+
+    try {
+      $cf_container = $conn->get_container($container_name);
+    }
+    catch (NoSuchContainerException $e) {
+      form_set_error('rackspace_cloud_container', t('Container %name does not exist.', array('%name' => $container_name)));
+    }
+
+    $values = array(
+      'name' => $cf_container->name,
+      'published' => $cf_container->cdn_enabled,
+      'cdn_domain' => file_uri_target($cf_container->cdn_uri),
+    );
+
+
+    // Validate the default container, and create a container entity.
+    $container = entity_create('cloud_files_container', $values);
+    $container->save();
   }
 }

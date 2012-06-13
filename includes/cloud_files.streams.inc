@@ -143,9 +143,6 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "executing getExternalUrl (%uri)", array('%uri' => $this->uri), WATCHDOG_DEBUG);
     }
 
-    $this->getCloudFilesContainer();
-    $container = $this->cloud_files_container;
-
     $target = file_uri_target($this->uri);
     $path = explode("/", $target);
 
@@ -170,6 +167,10 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
         }
       }
     }
+
+
+    $this->getCloudFilesContainer();
+    $container = $this->cloud_files_container;
 
     if (!$container->published) {
       if ($key = variable_get('rackspace_cloud_temp_url_key')) {
