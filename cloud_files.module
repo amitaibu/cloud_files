@@ -36,39 +36,41 @@ function cloud_files_get_container($name) {
 }
 
 /**
- * Set container for URI.
+ * Get or Set container for URI.
+ *
+ * @param $uri
+ *   The uri to get or set.
+ * @param $name
+ *   Optional; The container name to set.
+ *
+ * @return
+ *   If name is empty, return the container name if found, or the default
+ *   contiainer.
  */
-function cloud_files_set_container_cache($uri, $name) {
-  ctools_include('object-cache');
-  $cache = new stdClass;
-  $cache->name = $name;
-  ctools_object_cache_set('cloud_files', $uri, $cache);
-}
-
-/**
- * Get container for URI
- */
-function cloud_files_get_container_cache($uri) {
-  ctools_include('object-cache');
-  $cache = ctools_object_cache_get('cloud_files', $uri);
-  return !empty($cache->name) ? $cache->name : FALSE;
+function cloud_files_container_cache($uri, $name = NULL) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  if ($name) {
+    $cache[$uri] = $name;
+    return;
+  }
+  else {
+    return !empty($cache[$uri]) ? $cache[$uri] : variable_get('rackspace_cloud_container');
+  }
 }
 
 /**
  * Implements hook_file_presave();
+ *
+ * Add reference to the container entity.
  */
 function cloud_files_file_presave($file) {
-  ctools_include('object-cache');
-  if (!$name = cloud_files_get_container_cache($file->uri)) {
+  if (strpos($file->uri, 'rcf://') !== 0) {
     return;
   }
 
   $wrapper = entity_metadata_wrapper('file', $file);
-  $container = cloud_files_get_container($name);
+  $container = cloud_files_get_container(cloud_files_container_cache($file->uri));
   $wrapper->cloud_files_container->set($container);
-
-  // Clear the cache.
-  ctools_object_cache_clear('cloud_files', $file->uri);
 }
 
 /**

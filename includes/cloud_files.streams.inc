@@ -173,6 +173,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
 
     if (!$container->published) {
       if ($key = variable_get('rackspace_cloud_temp_url_key')) {
+        $this->getContainer();
+        $this->object = $this->container->get_object($target);
         // TODO: Change to variable.
         $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
         // TODO: Allow define HTTP method to PUT as-well?
@@ -526,6 +528,13 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if ($uri == NULL) {
       $uri = $this->uri;
     }
+
+    $cache = &drupal_static(__METHOD__, array());
+    if (isset($cache[$uri])) {
+      return $cache[$uri];
+    }
+
+
     if (variable_get('rackspace_cloud_debug')) {
       watchdog("cloud_files", "Checking file status (url_stat) %file", array('%file' => $uri), WATCHDOG_DEBUG);
     }
@@ -582,6 +591,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       }
     }
 
+    $cache[$uri] = $return;
     return $return;
   }
 
@@ -759,7 +769,12 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
   }
 
   public function getContainer() {
-    if (!empty($this->container)) {
+    $this->getCloudFilesContainer();
+    $container = $this->cloud_files_container;
+
+    $cache = &drupal_static(__METHOD__, array());
+    if (!empty($cache[$container->name])) {
+      $this->container = $cache[$container->name];
       return;
     }
     libraries_load('rackspace');
@@ -770,8 +785,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       watchdog("cloud_files", "requesting container from Rackspace (%container)", array('%container' => variable_get('rackspace_cloud_container')), WATCHDOG_DEBUG);
     }
 
-    $this->getCloudFilesContainer();
-    $this->container = $conn->get_container($this->cloud_files_container->name);
+    $cache[$container->name] = $conn->get_container($this->cloud_files_container->name);
+    $this->container = $cache[$container->name];
   }
 
   public function getAuthentication() {
@@ -792,9 +807,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       return;
     }
 
-    if (!$name = cloud_files_get_container_cache($this->uri)) {
-      $name = variable_get('rackspace_cloud_container');
-    }
+    $name = cloud_files_container_cache($this->uri);
     $this->cloud_files_container = cloud_files_get_container($name);
   }
 }
