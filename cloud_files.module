@@ -137,6 +137,39 @@ function cloud_files_container_cache($uri, $name = NULL) {
 }
 
 /**
+ * Upload a local file to Cloud files.
+ *
+ * @param $source
+ *   URI or stream wrapper of the local file. e.g. public://foo.txt
+ * @param $destination
+ *   Optional; The destination name of the file e.g. foo.txt
+ *   If empty the file name will be taken from the source.
+ * @param $container_name
+ *   Optional; The container name. If empty a default value will be used.
+ *
+ * @return
+ *   TRUE if upload was sucessful.
+ *
+ * @see cloud_files_container_cache()
+ */
+function cloud_files_load_from_filename($source, $destination = NULL, $container_name = NULL) {
+  // Move the file to the container.
+  $auth = cloud_files_get_authentication();
+  $conn = new CF_Connection($auth);
+
+  // If no container name, check if it was registered in
+  // cloud_files_container_cache().
+  $container_name = $container_name ? $container_name : cloud_files_container_cache($uri);
+
+  // If no destination given, use the source as the filename.
+  $destination = $destination ? $destination : drupal_basename($source);
+
+  $cf_container = $conn->get_container($container_name);
+  $cf_file = $cf_container->create_object($destination);
+  return $cf_file->load_from_filename(drupal_realpath($source));
+}
+
+/**
  * Implements hook_field_attach_presave();
  *
  * We use this hook instead of hook_file_presave() to make sure we are
