@@ -149,22 +149,23 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     $uri = NULL;
     // if its a request for styles, need to check if it exists
     if ($path[0] == 'styles') {
-      if (!isset($this->object)) {
+      // Get the original URI.
+      $style_name = $path[1];
+      unset($path[0], $path[1], $path[2]);
+      $uri = 'rcf://' . implode('/', $path);
+
+      if (!isset($this->object) && !cloud_files_set_image_style_by_uri($uri, $style_name)) {
         //exceptions are expensive, but unfortunately RS doesnt provide a
         // better way to check if a file exists.
         try {
-          // Pass the original URI.
-          unset($path[0], $path[1], $path[2]);
-          $uri = 'rcf://' . implode('/', $path);
           $this->getContainer($uri);
           // Get the original container.
           $this->object = $this->container->get_object($target);
         }
         catch (NoSuchObjectException $e) {
-          // Image styles support
-          // image is generated when its first requested, so serve from the private file system
-          // this will save the file to rackspace and it'll exist next and wont error into this
-          return url('system/files/' . $this->getLocalPath(), array('absolute' => TRUE));
+          // TODO: Require lock.
+          $style = image_style_load($style_name);
+          image_style_create_derivative($style, $uri, $this->uri);
         }
       }
     }
@@ -175,8 +176,10 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if (!$container->published) {
       if ($key = variable_get('rackspace_cloud_temp_url_key')) {
         try {
-          $this->getContainer($uri);
-          $this->object = $this->container->get_object($target);
+          if (!$this->object) {
+            $this->getContainer($uri);
+            $this->object = $this->container->get_object($target);
+          }
           // TODO: Change to variable.
           $expires = $container->temp_url_expire ? $container->temp_url_expire : 60;
           // TODO: Allow define HTTP method to PUT as-well?

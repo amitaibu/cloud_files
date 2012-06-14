@@ -83,6 +83,24 @@ function cloud_files_install() {
     'label' => t('Cloud files container'),
   );
   field_create_instance($instance);
+
+  // Image-style text field.
+  $field = array(
+    'entity_types' => array('file'),
+    'field_name' => 'cloud_files_image_style',
+    'type' => 'text',
+    'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+    'locked' => TRUE,
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'cloud_files_image_style',
+    'entity_type' => 'file',
+    'bundle' => 'cloud_files',
+    'label' => t('Cloud files process image styles'),
+  );
+  field_create_instance($instance);
 }
 
 /**

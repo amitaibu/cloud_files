@@ -61,9 +61,12 @@ class CloudFilesContainer extends Entity {
 
         if ($this->published) {
           $cf_container->make_public();
-          $this->cdn_domain = file_uri_target($cf_container->cdn_uri);
         }
       }
+    }
+
+    if (empty($this->cdn_domain) && $this->published) {
+      $this->cdn_domain = file_uri_target($cf_container->cdn_uri);
     }
     parent::save();
   }
