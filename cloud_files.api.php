@@ -21,7 +21,7 @@
  */
 function hook_cloud_files_build_object($object, $context) {
   // Add CORS to file.
-  $this->object->headers = array(
+  $object->headers = array(
     'Access-Control-Allow-Origin' => '*',
   );
 }
