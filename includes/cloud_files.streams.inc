@@ -420,6 +420,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
       $this->object->content_type = $this->getMimeType($this->uri);
     }
     if ($this->write) {
+      // Allow other modules to add headers.
+      module_invoke_all('cloud_files_build_object', $this->object, $this);
       // TODO: We should probalby return the result of this.
       $this->object->write($this->stream_data);
     }
