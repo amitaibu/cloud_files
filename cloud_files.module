@@ -157,12 +157,12 @@ function cloud_files_load_from_filename($source, $destination = NULL, $container
   $auth = cloud_files_get_authentication();
   $conn = new CF_Connection($auth);
 
-  // If no container name, check if it was registered in
-  // cloud_files_container_cache().
-  $container_name = $container_name ? $container_name : cloud_files_container_cache($uri);
-
   // If no destination given, use the source as the filename.
   $destination = $destination ? $destination : drupal_basename($source);
+
+  // If no container name, check if it was registered in
+  // cloud_files_container_cache().
+  $container_name = $container_name ? $container_name : cloud_files_container_cache('rcf://' . $destination);
 
   $cf_container = $conn->get_container($container_name);
   $cf_file = $cf_container->create_object($destination);
