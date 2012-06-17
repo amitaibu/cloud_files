@@ -153,20 +153,12 @@ function cloud_files_container_cache($uri, $name = NULL) {
  * @see cloud_files_container_cache()
  */
 function cloud_files_load_from_filename($source, $destination = NULL, $container_name = NULL) {
-  // Move the file to the container.
-  $auth = cloud_files_get_authentication();
-  $conn = new CF_Connection($auth);
-
   // If no destination given, use the source as the filename.
   $destination = $destination ? $destination : drupal_basename($source);
 
-  // If no container name, check if it was registered in
-  // cloud_files_container_cache().
-  $container_name = $container_name ? $container_name : cloud_files_container_cache('rcf://' . $destination);
-
-  $cf_container = $conn->get_container($container_name);
-  $cf_file = $cf_container->create_object($destination);
-  return $cf_file->load_from_filename(drupal_realpath($source));
+  $src = fopen($source, 'r');
+  $dest = fopen($destination, 'w');
+  return stream_copy_to_stream($src, $dest);
 }
 
 /**
