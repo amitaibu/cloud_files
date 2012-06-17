@@ -144,20 +144,18 @@ function cloud_files_container_cache($uri, $name = NULL) {
  * @param $destination
  *   Optional; The destination name of the file e.g. foo.txt
  *   If empty the file name will be taken from the source.
- * @param $container_name
- *   Optional; The container name. If empty a default value will be used.
  *
  * @return
- *   TRUE if upload was sucessful.
+ *   Returns the total count of bytes copied.
  *
- * @see cloud_files_container_cache()
+ * @see stream_copy_to_stream()
  */
-function cloud_files_load_from_filename($source, $destination = NULL, $container_name = NULL) {
+function cloud_files_load_from_filename($source, $destination = NULL) {
   // If no destination given, use the source as the filename.
   $destination = $destination ? $destination : drupal_basename($source);
 
   $src = fopen($source, 'r');
-  $dest = fopen($destination, 'w');
+  $dest = fopen('rcf://' . $destination, 'w');
   return stream_copy_to_stream($src, $dest);
 }
 
