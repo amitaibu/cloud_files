@@ -146,6 +146,7 @@ function cloud_files_admin_settings_validate($form, &$form_state) {
     }
     catch (NoSuchContainerException $e) {
       form_set_error('rackspace_cloud_container', t('Container %name does not exist.', array('%name' => $container_name)));
+      return;
     }
 
     $values = array(
