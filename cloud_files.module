@@ -6,6 +6,114 @@
  */
 
 /**
+ * Implements hook_element_info_alter().
+ */
+function cloud_files_element_info_alter(&$type) {
+  $types['managed_file']['#value_callback'] = 'cloud_files_managed_file_value';
+}
+
+/**
+ * Value callback override.
+ *
+ * Remove checking for directory as we can speed-up upload time, by adding
+ * the directories directly to the field name, and cloud-files will create
+ * them for us.
+ *
+ * Instead of calling file_managed_file_save_upload() we call our own
+ * function.
+ *
+ * @see file_managed_file_value()
+ */
+function cloud_files_managed_file_value(&$element, $input = FALSE, $form_state = NULL) {
+  $fid = 0;
+
+  // Find the current value of this field from the form state.
+  $form_state_fid = $form_state['values'];
+  foreach ($element['#parents'] as $parent) {
+    $form_state_fid = isset($form_state_fid[$parent]) ? $form_state_fid[$parent] : 0;
+  }
+
+  if ($element['#extended'] && isset($form_state_fid['fid'])) {
+    $fid = $form_state_fid['fid'];
+  }
+  elseif (is_numeric($form_state_fid)) {
+    $fid = $form_state_fid;
+  }
+
+  // Process any input and save new uploads.
+  if ($input !== FALSE) {
+    $return = $input;
+
+    // Uploads take priority over all other values.
+    if ($file = cloud_files_managed_file_save_upload($element)) {
+      $fid = $file->fid;
+    }
+    else {
+      // Check for #filefield_value_callback values.
+      // Because FAPI does not allow multiple #value_callback values like it
+      // does for #element_validate and #process, this fills the missing
+      // functionality to allow File fields to be extended through FAPI.
+      if (isset($element['#file_value_callbacks'])) {
+        foreach ($element['#file_value_callbacks'] as $callback) {
+          $callback($element, $input, $form_state);
+        }
+      }
+      // Load file if the FID has changed to confirm it exists.
+      if (isset($input['fid']) && $file = file_load($input['fid'])) {
+        $fid = $file->fid;
+      }
+    }
+  }
+
+  // If there is no input, set the default value.
+  else {
+    if ($element['#extended']) {
+      $default_fid = isset($element['#default_value']['fid']) ? $element['#default_value']['fid'] : 0;
+      $return = isset($element['#default_value']) ? $element['#default_value'] : array('fid' => 0);
+    }
+    else {
+      $default_fid = isset($element['#default_value']) ? $element['#default_value'] : 0;
+      $return = array('fid' => 0);
+    }
+
+    // Confirm that the file exists when used as a default value.
+    if ($default_fid && $file = file_load($default_fid)) {
+      $fid = $file->fid;
+    }
+  }
+
+  $return['fid'] = $fid;
+
+  return $return;
+}
+
+/**
+ * Saves any files that have been uploaded into a managed_file element.
+ *
+ * @param $element
+ *   The FAPI element whose values are being saved.
+ *
+ * @return
+ *   The file object representing the file that was saved, or FALSE if no file
+ *   was saved.
+ */
+function cloud_files_managed_file_save_upload($element) {
+  $upload_name = implode('_', $element['#parents']);
+  if (empty($_FILES['files']['name'][$upload_name])) {
+    return FALSE;
+  }
+
+  $destination = isset($element['#upload_location']) ? $element['#upload_location'] : NULL;
+  if (!$file = file_save_upload($upload_name, $element['#upload_validators'], $destination)) {
+    watchdog('file', 'The file upload failed. %upload', array('%upload' => $upload_name));
+    form_set_error($upload_name, t('The file in the !name field was unable to be uploaded.', array('!name' => $element['#title'])));
+    return FALSE;
+  }
+
+  return $file;
+}
+
+/**
  * Get the Cloud files container entity by name
  *
  * @param $name
