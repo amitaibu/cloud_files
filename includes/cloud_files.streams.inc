@@ -545,8 +545,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     }
 
     $cache = &drupal_static(__METHOD__, array());
-    if (isset($cache[$uri])) {
-      //return $cache[$uri];
+    if (!empty($cache[$uri])) {
+      return $cache[$uri];
     }
 
 
