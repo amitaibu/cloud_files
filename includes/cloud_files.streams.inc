@@ -280,8 +280,8 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
    * @see http://php.net/manual/en/streamwrapper.stream-lock.php
    */
   public function stream_lock($operation) {
-    //Rackspace Cloud Files does not have locking
-    return False;
+    //Rackspace Cloud Files does not have locking.
+    return FALSE;
   }
 
   /**
@@ -375,21 +375,18 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
           $this->stream_pointer = $offset;
           return TRUE;
         }
-        return FALSE;
+
       case SEEK_CUR:
         if ($offset >= 0) {
           $this->stream_pointer += $offset;
           return TRUE;
         }
-        return FALSE;
+
       case SEEK_END:
         if (strlen($this->stream_data) + $offset >= 0) {
           $this->stream_pointer = strlen($this->stream_data) + $offset;
           return TRUE;
         }
-        return FALSE;
-      default:
-        return FALSE;
     }
     return FALSE;
   }
@@ -422,6 +419,7 @@ class RackspaceCloudFilesStreamWrapper implements DrupalStreamWrapperInterface {
     if ($this->write) {
       // Allow other modules to add headers.
       module_invoke_all('cloud_files_build_object', $this->object, $this);
+
       // TODO: We should probalby return the result of this.
       $this->object->write($this->stream_data);
     }
