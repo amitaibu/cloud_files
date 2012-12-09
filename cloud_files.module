@@ -255,9 +255,8 @@ function cloud_files_libraries_info() {
       'title' => 'Rackspace Cloud Files PHP API',
       'vendor url' => 'https://github.com/rackspace/php-cloudfiles',
       'download url' => 'https://github.com/rackspace/php-cloudfiles',
-      'path' => 'php-cloudfiles',
       'version arguments' => array(
-        'file' => 'php-cloudfiles/Changelog',
+        'file' => 'Changelog',
         'pattern' => '/(\d+\.\d+(\.\d+)?)/',
       ),
       'files' => array(
